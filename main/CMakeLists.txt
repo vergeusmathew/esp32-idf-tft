@@ -1,3 +1,13 @@
-idf_component_register(SRCS "main.cpp"
-                       PRIV_REQUIRES spi_flash esp_psram esp_lcd esp_driver_ledc
-                       INCLUDE_DIRS "")
+idf_component_register(
+    SRCS 
+        "main.cpp"
+        "display/Display.cpp"
+    PRIV_REQUIRES 
+        spi_flash 
+        esp_psram 
+        esp_lcd 
+        esp_driver_ledc
+    INCLUDE_DIRS 
+        "."
+        "display"
+)
