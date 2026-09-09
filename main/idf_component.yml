@@ -1,0 +1,4 @@
+## This file is empty by default.
+dependencies:
+  idf:
+    version: ">=5.0.0"

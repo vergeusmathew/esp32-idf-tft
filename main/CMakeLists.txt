@@ -2,12 +2,16 @@ idf_component_register(
     SRCS 
         "main.cpp"
         "display/Display.cpp"
+        "touch/GT911.cpp"
     PRIV_REQUIRES 
         spi_flash 
         esp_psram 
         esp_lcd 
         esp_driver_ledc
+        esp_driver_i2c
+        esp_driver_rmt
     INCLUDE_DIRS 
         "."
         "display"
+        "touch"
 )
