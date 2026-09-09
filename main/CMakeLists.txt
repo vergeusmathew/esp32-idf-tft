@@ -3,6 +3,10 @@ idf_component_register(
         "main.cpp"
         "display/Display.cpp"
         "touch/GT911.cpp"
+        "lvgl/LVGLDisplay.cpp"
+        "lvgl/LVGLTouch.cpp"
+        "led/RGBLed.cpp"
+        "ui/UI.cpp"
     PRIV_REQUIRES 
         spi_flash 
         esp_psram 
@@ -10,8 +14,12 @@ idf_component_register(
         esp_driver_ledc
         esp_driver_i2c
         esp_driver_rmt
+        esp_timer
     INCLUDE_DIRS 
         "."
         "display"
         "touch"
+        "lvgl"
+        "led"
+        "ui"
 )
