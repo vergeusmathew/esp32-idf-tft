@@ -7,10 +7,12 @@ idf_component_register(
         "lvgl/LVGLTouch.cpp"
         "led/RGBLed.cpp"
         "ui/UI.cpp"
+        "flash/WinbondFlash.cpp"
     PRIV_REQUIRES 
         spi_flash 
         esp_psram 
-        esp_lcd 
+        esp_lcd
+        esp_driver_spi 
         esp_driver_ledc
         esp_driver_i2c
         esp_driver_rmt
@@ -22,4 +24,5 @@ idf_component_register(
         "lvgl"
         "led"
         "ui"
+        "flash"
 )

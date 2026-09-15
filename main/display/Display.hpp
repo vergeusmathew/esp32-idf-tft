@@ -4,7 +4,10 @@
 
 #include "esp_err.h"
 #include "esp_lcd_panel_ops.h"
+#include "freertos/FreeRTOS.h"   // must come before semphr.h
+#include "freertos/semphr.h"
 
+#define CL  1
 class Display
 {
 public:
@@ -15,12 +18,28 @@ public:
     ~Display() = default;
 
     esp_err_t init();
-
+#ifdef G
     uint16_t *framebuffer();
-
+#endif
+#ifdef CL    
+    uint16_t *framebuffer();
+    uint16_t* framebuffer2();    // add this
+#endif
     void fillTestPattern();
+#ifdef CL
+// Display.hpp
+    esp_lcd_panel_handle_t panelHandle() const { return panel_handle_; }
+    SemaphoreHandle_t vsyncSemaphore() const { return vsync_sem_; }
+#endif
 
 private:
+//#ifdef G
     esp_lcd_panel_handle_t panel_handle_ = nullptr;
+//#endif
+
     uint16_t *framebuffer_ = nullptr;
+    uint16_t *framebuffer2_ = nullptr;
+#ifdef CL
+    SemaphoreHandle_t vsync_sem_ = nullptr;
+#endif
 };

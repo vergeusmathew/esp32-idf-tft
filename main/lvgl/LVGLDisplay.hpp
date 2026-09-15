@@ -2,6 +2,9 @@
 
 #include "lvgl.h"
 #include "display/Display.hpp"
+#include "freertos/FreeRTOS.h"   // must come first
+#include "freertos/semphr.h"
+#include "esp_lcd_panel_ops.h"
 
 class LVGLDisplay
 {
@@ -21,4 +24,10 @@ private:
         lv_display_t* display,
         const lv_area_t* area,
         uint8_t* px_map);
+
+    struct FlushContext {
+        esp_lcd_panel_handle_t panel_handle;
+        SemaphoreHandle_t vsync_sem;
+    };
+    FlushContext flush_ctx_{};
 };

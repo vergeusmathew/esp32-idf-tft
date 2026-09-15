@@ -57,9 +57,10 @@ esp_err_t RGBLed::init()
         "RGB LED initialized on GPIO%d",
         RGB_LED_GPIO);
 
-    setRed();
+    //setRed();
     //setGreen();
-
+    off();
+    
     return ESP_OK;
 }
 

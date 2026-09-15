@@ -1,26 +1,62 @@
 #include "LVGLDisplay.hpp"
 
 #include <cstring>
+#include "esp_log.h"
+#define CL  1
 
 bool LVGLDisplay::init(Display& display)
 {
+    ESP_LOGI("LVGLDisplay", "init() START");
     display_ = &display;
 
+    ESP_LOGI("LVGLDisplay", "Before lv_display_create()");
     lv_display_ = lv_display_create(
         Display::WIDTH,
         Display::HEIGHT);
+
+    ESP_LOGI(
+        "LVGLDisplay",
+        "After lv_display_create(): %p",
+        lv_display_);
+
+    if (!lv_display_)
+    {
+        ESP_LOGE(
+            "LVGLDisplay",
+            "lv_display_create() failed");
+
+        return false;
+    }
 
     if (lv_display_ == nullptr) {
         return false;
     }
 
+    //lv_display_set_user_data(lv_display_, display_->panelHandle());
+
+    ESP_LOGI(
+        "LVGLDisplay",
+        "Before lv_display_set_color_format()");
+
     lv_display_set_color_format(
         lv_display_,
         LV_COLOR_FORMAT_RGB565);
 
+    ESP_LOGI(
+        "LVGLDisplay",
+        "After lv_display_set_color_format()");
+
+    ESP_LOGI(
+        "LVGLDisplay",
+        "Before lv_display_set_flush_cb()");
+
     lv_display_set_flush_cb(
         lv_display_,
         flushCallback);
+
+     ESP_LOGI(
+        "LVGLDisplay",
+        "After lv_display_set_flush_cb()");
 
     /*
      * Use the framebuffer already allocated by our
@@ -28,12 +64,38 @@ bool LVGLDisplay::init(Display& display)
      *
      * LVGL will render directly into it.
      */
+    void* framebuffer = display_->framebuffer();
+
+    ESP_LOGI(
+        "LVGLDisplay",
+        "Framebuffer address: %p",
+        framebuffer);
+
+    ESP_LOGI(
+        "LVGLDisplay",
+        "Before lv_display_set_buffers()");
+
     lv_display_set_buffers(
         lv_display_,
         display_->framebuffer(),
+#ifdef CL        
+        display_->framebuffer2(),
+#endif
+#ifdef G        
         nullptr,
+#endif        
         Display::WIDTH * Display::HEIGHT * sizeof(uint16_t),
         LV_DISPLAY_RENDER_MODE_DIRECT);
+
+        flush_ctx_.panel_handle = display_->panelHandle();
+        flush_ctx_.vsync_sem    = display_->vsyncSemaphore();
+        lv_display_set_user_data(lv_display_, &flush_ctx_);
+
+    ESP_LOGI(
+        "LVGLDisplay",
+        "After lv_display_set_buffers()");
+
+    ESP_LOGI("LVGLDisplay", "init() END");
 
     return true;
 }
@@ -48,11 +110,35 @@ void LVGLDisplay::flushCallback(
     const lv_area_t* area,
     uint8_t* px_map)
 {
-    /*
-     * In DIRECT mode LVGL renders directly into the
-     * RGB panel framebuffer, so there is nothing to copy.
-     *
-     * We only need to tell LVGL that the flush is complete.
-     */
+    auto* ctx = static_cast<FlushContext*>(lv_display_get_user_data(display));
+
+    xSemaphoreTake(ctx->vsync_sem, portMAX_DELAY);
+
+    esp_lcd_panel_draw_bitmap(
+        ctx->panel_handle,
+        area->x1, area->y1,
+        area->x2 + 1, area->y2 + 1,
+        px_map);
+
     lv_display_flush_ready(display);
+    /*
+#ifdef CL
+    esp_lcd_panel_handle_t panel_handle =
+        static_cast<esp_lcd_panel_handle_t>(lv_display_get_user_data(display));
+
+    esp_lcd_panel_draw_bitmap(
+        panel_handle,
+        area->x1, area->y1,
+        area->x2 + 1, area->y2 + 1,
+        px_map);
+
+    lv_display_flush_ready(display);
+#endif
+#ifdef G
+    //In DIRECT mode LVGL renders directly into the
+    // RGB panel framebuffer, so there is nothing to copy.
+    // We only need to tell LVGL that the flush is complete.
+    lv_display_flush_ready(display);
+#endif    
+      */
 }

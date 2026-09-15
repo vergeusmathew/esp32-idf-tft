@@ -8,7 +8,7 @@
 // -----------------------------------------------------------------------------
 // Display GPIO definitions
 // -----------------------------------------------------------------------------
-
+#define CL  1
 #define R_GPIO_3  GPIO_NUM_13
 #define R_GPIO_4  GPIO_NUM_12
 #define R_GPIO_5  GPIO_NUM_11
@@ -87,7 +87,7 @@ esp_err_t Display::init()
 
     // Framebuffer lives in PSRAM.
     rgb_config.flags.fb_in_psram = 1;
-
+    rgb_config.flags.double_fb = 1;   // allocate 2 physical framebuffers
     // -------------------------------------------------------------------------
     // Initialize all RGB data GPIOs as disconnected first.
     // -------------------------------------------------------------------------
@@ -133,19 +133,48 @@ esp_err_t Display::init()
     ESP_ERROR_CHECK(
         esp_lcd_panel_init(panel_handle_)
     );
+#ifdef CL
+    vsync_sem_ = xSemaphoreCreateBinary();
+
+    esp_lcd_rgb_panel_event_callbacks_t cbs = {};
+    cbs.on_vsync = [](esp_lcd_panel_handle_t panel,
+                       const esp_lcd_rgb_panel_event_data_t* edata,
+                       void* user_ctx) -> bool {
+        SemaphoreHandle_t sem = static_cast<SemaphoreHandle_t>(user_ctx);
+        BaseType_t woken = pdFALSE;
+        xSemaphoreGiveFromISR(sem, &woken);
+        return woken == pdTRUE;
+    };
+
+    ESP_ERROR_CHECK(
+        esp_lcd_rgb_panel_register_event_callbacks(panel_handle_, &cbs, vsync_sem_)
+    );
+#endif    
 
     // -------------------------------------------------------------------------
     // Get framebuffer
     // -------------------------------------------------------------------------
-
+#ifdef CL    
+    void* buf1 = nullptr;
+    void* buf2 = nullptr;
+#endif    
     ESP_ERROR_CHECK(
+#ifdef CL        
+        esp_lcd_rgb_panel_get_frame_buffer(panel_handle_, 2, &buf1, &buf2)
+#endif
+#ifdef GM        
+        
         esp_lcd_rgb_panel_get_frame_buffer(
             panel_handle_,
             1,
             reinterpret_cast<void **>(&framebuffer_)
         )
+#endif        
     );
-
+#ifdef CL    
+    framebuffer_  = static_cast<uint16_t*>(buf1);
+    framebuffer2_ = static_cast<uint16_t*>(buf2);  
+#endif    
     ESP_LOGI(TAG, "Display initialized: %dx%d RGB565", WIDTH, HEIGHT);
 
     return ESP_OK;
@@ -160,6 +189,12 @@ uint16_t *Display::framebuffer()
     return framebuffer_;
 }
 
+#ifdef CL 
+uint16_t *Display::framebuffer2()
+{
+    return framebuffer2_;
+}
+#endif
 // -----------------------------------------------------------------------------
 // Test pattern
 // -----------------------------------------------------------------------------
