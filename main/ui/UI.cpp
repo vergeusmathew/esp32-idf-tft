@@ -9,7 +9,18 @@ namespace
 constexpr int32_t PLANE_X    = 160;
 constexpr int32_t PLANE_Y    = 24;
 constexpr int32_t PLANE_SIZE = 220;
+
+constexpr int32_t CLKPLANE_X    = 440;
+constexpr int32_t CLKPLANE_Y    = 24;
+
+constexpr int32_t SETTINGSPLANE_X  = 440;
+constexpr int32_t SETTINGSPLANE_Y  = 260;
+
+constexpr int32_t WEIGHPLANE_X  = 160;
+constexpr int32_t WEIGHPLANE_Y  = 260;
+
 }
+
 
 void UI::speedometerTouchCallback(lv_event_t* e)
 {
@@ -34,7 +45,7 @@ void UI::speedometerTouchCallback(lv_event_t* e)
         
         ui->showTouchHalo(ui->speedometerImage_);
     }
-    else if (code == LV_EVENT_RELEASED) {
+    else if (code == LV_EVENT_RELEASED){ //|| code == LV_EVENT_PRESS_LOST) {
 
         ESP_LOGI(TAG, "Speedometer icon released");
 
@@ -42,6 +53,110 @@ void UI::speedometerTouchCallback(lv_event_t* e)
         ui->rgbLed_->setBlue();
         // Yellow ring OFF
         lv_obj_add_flag( ui->speedometerHalo_, LV_OBJ_FLAG_HIDDEN); 
+    }
+}
+
+
+void UI::clockTouchCallback(lv_event_t* e)
+{
+    UI* ui = static_cast<UI*>(lv_event_get_user_data(e));
+
+    if (ui == nullptr) {
+        return;
+    }
+
+    lv_event_code_t code = lv_event_get_code(e);
+
+    if (code == LV_EVENT_PRESSED) {
+
+        ESP_LOGI(TAG, "Clock icon pressed");
+
+        // Touch -> GREEN
+        ui->rgbLed_->setGreen();
+
+        lv_label_set_text( ui->clockTouchedLabel_, "Clock touched");
+
+        lv_obj_clear_flag( ui->clockTouchedLabel_, LV_OBJ_FLAG_HIDDEN);
+        
+        ui->showTouchHalo(ui->clockImage_);
+    }
+    else if (code == LV_EVENT_RELEASED){ //|| code == LV_EVENT_PRESS_LOST) {
+
+        ESP_LOGI(TAG, "Clock icon released");
+
+        // Untouched -> BLUE
+        ui->rgbLed_->setBlue();
+        // Yellow ring OFF
+        lv_obj_add_flag( ui->clockHalo_, LV_OBJ_FLAG_HIDDEN); 
+    }
+}
+
+void UI::settingsTouchCallback(lv_event_t* e)
+{
+    UI* ui = static_cast<UI*>(lv_event_get_user_data(e));
+
+    if (ui == nullptr) {
+        return;
+    }
+
+    lv_event_code_t code = lv_event_get_code(e);
+
+    if (code == LV_EVENT_PRESSED) {
+
+        ESP_LOGI(TAG, "Settings icon pressed");
+
+        // Touch -> GREEN
+        ui->rgbLed_->setGreen();
+
+        lv_label_set_text( ui->settingsTouchedLabel_, "Settings touched");
+
+        lv_obj_clear_flag( ui->settingsTouchedLabel_, LV_OBJ_FLAG_HIDDEN);
+        
+        ui->showTouchHalo(ui->settingsImage_);
+    }
+    else if (code == LV_EVENT_RELEASED){ //|| code == LV_EVENT_PRESS_LOST) {
+
+        ESP_LOGI(TAG, "Settings icon released");
+
+        // Untouched -> BLUE
+        ui->rgbLed_->setBlue();
+        // Yellow ring OFF
+        lv_obj_add_flag( ui->settingsHalo_, LV_OBJ_FLAG_HIDDEN); 
+    }
+}
+
+
+void UI::weighTouchCallback(lv_event_t* e)
+{
+    UI* ui = static_cast<UI*>(lv_event_get_user_data(e));
+
+    if (ui == nullptr) {
+        return;
+    }
+
+    lv_event_code_t code = lv_event_get_code(e);
+
+    if (code == LV_EVENT_PRESSED) {
+
+        ESP_LOGI(TAG, "Weighscale icon pressed");
+
+        // Touch -> GREEN
+        ui->rgbLed_->setGreen();
+
+        lv_label_set_text( ui->weighTouchedLabel_, "Weighscale touched");
+
+        lv_obj_clear_flag( ui->weighTouchedLabel_, LV_OBJ_FLAG_HIDDEN);
+        
+        ui->showTouchHalo(ui->weighscaleImage_);
+    }
+    else if (code == LV_EVENT_RELEASED){ //|| code == LV_EVENT_PRESS_LOST) {
+
+        ESP_LOGI(TAG, "Weighscale icon released");
+
+        // Untouched -> BLUE
+        ui->rgbLed_->setBlue();
+        // Yellow ring OFF
+        lv_obj_add_flag( ui->weighHalo_, LV_OBJ_FLAG_HIDDEN); 
     }
 }
 
@@ -208,9 +323,77 @@ bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
                     CLOCK_IMAGE_WIDTH,
                     CLOCK_IMAGE_HEIGHT);
 
-    lv_obj_set_pos(clockImage_, 440, 24);
+    lv_obj_set_pos(clockImage_, CLKPLANE_X, CLKPLANE_Y);
 
     ESP_LOGI("UI", "Clock image loaded and positioned");
+
+    //-----------------C L O C K H A L O-------------------------
+    clockHalo_ = lv_obj_create(screen_);
+
+    if (clockHalo_ == nullptr) {
+        ESP_LOGE(TAG, "Failed to create Clock halo");
+        return false;
+    }
+
+    lv_obj_set_size( clockHalo_, CLOCK_IMAGE_WIDTH + 4, CLOCK_IMAGE_HEIGHT + 4);
+
+    lv_obj_set_pos( clockHalo_, CLKPLANE_X - 2, CLKPLANE_Y - 2);
+
+    lv_obj_set_style_bg_opa(clockHalo_, LV_OPA_TRANSP, 0);
+
+    lv_obj_set_style_border_color( clockHalo_, lv_color_hex(0xFFFF00), 0);
+
+    lv_obj_set_style_border_width( clockHalo_, 1, 0);
+
+    lv_obj_set_style_radius( clockHalo_, LV_RADIUS_CIRCLE,  0);
+
+    lv_obj_add_flag( clockHalo_, LV_OBJ_FLAG_HIDDEN);
+
+    lv_obj_add_flag( clockHalo_, LV_OBJ_FLAG_IGNORE_LAYOUT);
+
+    lv_obj_add_flag( clockHalo_, LV_OBJ_FLAG_FLOATING);
+
+    lv_obj_remove_flag( clockHalo_, LV_OBJ_FLAG_CLICKABLE);    
+
+    //--------------------------------------------
+
+    // Make Clock touchable
+    lv_obj_add_flag(clockImage_, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_add_event_cb( clockImage_, UI::clockTouchCallback, LV_EVENT_PRESSED, this);
+
+    lv_obj_add_event_cb( clockImage_, UI::clockTouchCallback, LV_EVENT_RELEASED, this);
+
+    //lv_obj_add_event_cb( clockImage_, UI::clockTouchCallback, LV_EVENT_PRESS_LOST, this);
+
+    lv_obj_set_style_bg_opa(clockImage_, LV_OPA_TRANSP,
+    static_cast<lv_style_selector_t>(
+        static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_PRESSED)));
+
+    lv_obj_set_style_image_recolor_opa(clockImage_, LV_OPA_TRANSP,
+    static_cast<lv_style_selector_t>(
+        static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_PRESSED)));
+
+    // -------------------------------------------------
+    // Clock touch test message
+    // -------------------------------------------------
+
+    clockTouchedLabel_ = lv_label_create(screen_);
+
+    if (clockTouchedLabel_ == nullptr) { 
+        ESP_LOGE(TAG, "Failed to create Clock touched label");
+        return false;
+    }
+
+    lv_label_set_text(clockTouchedLabel_, "Clock touched");
+
+    lv_obj_center(clockTouchedLabel_);
+
+    lv_obj_add_flag( clockTouchedLabel_, LV_OBJ_FLAG_HIDDEN);
+
+    ESP_LOGI(TAG, "Clock touch callback ready");
+
+    //-----------END OF--------C L O C K H A L O----------
 #endif
 //---------------------------------------------------------
 #if 1             
@@ -285,9 +468,7 @@ bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
     // Give LVGL the image descriptor
     lv_image_set_src(speedometerImage_, &speedometerImageDescriptor_);
 
-    lv_obj_set_size(speedometerImage_,
-                    IMAGE_WIDTH,
-                    IMAGE_HEIGHT);
+    lv_obj_set_size(speedometerImage_, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     lv_obj_set_pos(speedometerImage_, PLANE_X, PLANE_Y);
 
@@ -329,6 +510,8 @@ bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
     lv_obj_add_event_cb( speedometerImage_, UI::speedometerTouchCallback, LV_EVENT_PRESSED, this);
 
     lv_obj_add_event_cb( speedometerImage_, UI::speedometerTouchCallback, LV_EVENT_RELEASED, this);
+
+    //lv_obj_add_event_cb( speedometerImage_, UI::speedometerTouchCallback, LV_EVENT_PRESS_LOST, this);
 
     lv_obj_set_style_bg_opa(speedometerImage_, LV_OPA_TRANSP,
     static_cast<lv_style_selector_t>(
@@ -401,9 +584,77 @@ bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
                     SETTINGS_IMAGE_WIDTH,
                     SETTINGS_IMAGE_HEIGHT);
 
-    lv_obj_set_pos(settingsImage_, 440, 260);
+    lv_obj_set_pos(settingsImage_, SETTINGSPLANE_X, SETTINGSPLANE_Y);
 
     ESP_LOGI("UI", "Settings image loaded and positioned");
+
+    //-----------------S E T T I N G S H A L O-------------------------
+    settingsHalo_ = lv_obj_create(screen_);
+
+    if (settingsHalo_ == nullptr) {
+        ESP_LOGE(TAG, "Failed to create Settings halo");
+        return false;
+    }
+
+    lv_obj_set_size( settingsHalo_, SETTINGS_IMAGE_WIDTH + 4, SETTINGS_IMAGE_HEIGHT + 4);
+
+    lv_obj_set_pos( settingsHalo_, SETTINGSPLANE_X - 2, SETTINGSPLANE_Y - 2);
+
+    lv_obj_set_style_bg_opa(settingsHalo_, LV_OPA_TRANSP, 0);
+
+    lv_obj_set_style_border_color( settingsHalo_, lv_color_hex(0xFFFF00), 0);
+
+    lv_obj_set_style_border_width( settingsHalo_, 1, 0);
+
+    lv_obj_set_style_radius( settingsHalo_, LV_RADIUS_CIRCLE,  0);
+
+    lv_obj_add_flag( settingsHalo_, LV_OBJ_FLAG_HIDDEN);
+
+    lv_obj_add_flag( settingsHalo_, LV_OBJ_FLAG_IGNORE_LAYOUT);
+
+    lv_obj_add_flag( settingsHalo_, LV_OBJ_FLAG_FLOATING);
+
+    lv_obj_remove_flag( settingsHalo_, LV_OBJ_FLAG_CLICKABLE);    
+
+    //--------------------------------------------
+
+    // Make Settings touchable
+    lv_obj_add_flag(settingsImage_, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_add_event_cb( settingsImage_, UI::settingsTouchCallback, LV_EVENT_PRESSED, this);
+
+    lv_obj_add_event_cb( settingsImage_, UI::settingsTouchCallback, LV_EVENT_RELEASED, this);
+
+    //lv_obj_add_event_cb( clockImage_, UI::clockTouchCallback, LV_EVENT_PRESS_LOST, this);
+
+    lv_obj_set_style_bg_opa(settingsImage_, LV_OPA_TRANSP,
+    static_cast<lv_style_selector_t>(
+        static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_PRESSED)));
+
+    lv_obj_set_style_image_recolor_opa(clockImage_, LV_OPA_TRANSP,
+    static_cast<lv_style_selector_t>(
+        static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_PRESSED)));
+
+    // -------------------------------------------------
+    // Settings touch test message
+    // -------------------------------------------------
+
+    settingsTouchedLabel_ = lv_label_create(screen_);
+
+    if (settingsTouchedLabel_ == nullptr) { 
+        ESP_LOGE(TAG, "Failed to create Settings touched label");
+        return false;
+    }
+
+    lv_label_set_text(settingsTouchedLabel_, "Settings touched");
+
+    lv_obj_center(settingsTouchedLabel_);
+
+    lv_obj_add_flag( settingsTouchedLabel_, LV_OBJ_FLAG_HIDDEN);
+
+    ESP_LOGI(TAG, "Settings touch callback ready");
+
+    //-----------END OF--------S E T T I N G S H A L O----------
 #endif
 //---------------------------------------------------------
 
@@ -424,14 +675,14 @@ bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
             MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
 
     if (weighscaleImageData_ == nullptr) {
-        ESP_LOGE("UI", "Failed to allocate Settings image buffer");
+        ESP_LOGE("UI", "Failed to allocate Weighscale image buffer");
         return false;
     }
 
     if (flash_->read(WEIGH_IMAGE_ADDRESS,
                      weighscaleImageData_,
                      WEIGH_IMAGE_SIZE) != ESP_OK) {
-        ESP_LOGE("UI", "Failed to read Settings image from W25Q128");
+        ESP_LOGE("UI", "Failed to read Weighscale image from W25Q128");
         return false;
     }
 
@@ -447,13 +698,80 @@ bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
 
     lv_image_set_src(weighscaleImage_, &weighscaleImageDescriptor_);
 
-    lv_obj_set_size(weighscaleImage_,
-                    WEIGH_IMAGE_WIDTH,
-                    WEIGH_IMAGE_HEIGHT);
+    lv_obj_set_size(weighscaleImage_, WEIGH_IMAGE_WIDTH, WEIGH_IMAGE_HEIGHT);
 
-    lv_obj_set_pos(weighscaleImage_, 160, 260);
+    lv_obj_set_pos(weighscaleImage_, WEIGHPLANE_X, WEIGHPLANE_Y);
 
-    ESP_LOGI("UI", "Settings image loaded and positioned");
+    ESP_LOGI("UI", "Weighscale image loaded and positioned");
+
+    //-----------------W E I G H S C A L E  H A L O-------------------------
+    weighHalo_ = lv_obj_create(screen_);
+
+    if (weighHalo_ == nullptr) {
+        ESP_LOGE(TAG, "Failed to create Weighscale halo");
+        return false;
+    }
+
+    lv_obj_set_size( weighHalo_, WEIGH_IMAGE_WIDTH + 4, WEIGH_IMAGE_HEIGHT + 4);
+
+    lv_obj_set_pos( weighHalo_, SETTINGSPLANE_X - 2, SETTINGSPLANE_Y - 2);
+
+    lv_obj_set_style_bg_opa(weighHalo_, LV_OPA_TRANSP, 0);
+
+    lv_obj_set_style_border_color( weighHalo_, lv_color_hex(0xFFFF00), 0);
+
+    lv_obj_set_style_border_width( weighHalo_, 1, 0);
+
+    lv_obj_set_style_radius( weighHalo_, LV_RADIUS_CIRCLE,  0);
+
+    lv_obj_add_flag( weighHalo_, LV_OBJ_FLAG_HIDDEN);
+
+    lv_obj_add_flag( weighHalo_, LV_OBJ_FLAG_IGNORE_LAYOUT);
+
+    lv_obj_add_flag( weighHalo_, LV_OBJ_FLAG_FLOATING);
+
+    lv_obj_remove_flag( weighHalo_, LV_OBJ_FLAG_CLICKABLE);    
+
+    //--------------------------------------------
+
+    // Make Weighscale touchable
+    lv_obj_add_flag(weighscaleImage_, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_add_event_cb( weighscaleImage_, UI::weighTouchCallback, LV_EVENT_PRESSED, this);
+
+    lv_obj_add_event_cb( weighscaleImage_, UI::weighTouchCallback, LV_EVENT_RELEASED, this);
+
+    //lv_obj_add_event_cb( clockImage_, UI::clockTouchCallback, LV_EVENT_PRESS_LOST, this);
+
+    lv_obj_set_style_bg_opa(weighscaleImage_, LV_OPA_TRANSP,
+    static_cast<lv_style_selector_t>(
+        static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_PRESSED)));
+
+    lv_obj_set_style_image_recolor_opa(clockImage_, LV_OPA_TRANSP,
+    static_cast<lv_style_selector_t>(
+        static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_PRESSED)));
+
+    // -------------------------------------------------
+    // Weighscale touch test message
+    // -------------------------------------------------
+
+    weighTouchedLabel_ = lv_label_create(screen_);
+
+    if (weighTouchedLabel_ == nullptr) { 
+        ESP_LOGE(TAG, "Failed to create Weighscale touched label");
+        return false;
+    }
+
+    lv_label_set_text(weighTouchedLabel_, "Weighscale touched");
+
+    lv_obj_center(weighTouchedLabel_);
+
+    lv_obj_add_flag( weighTouchedLabel_, LV_OBJ_FLAG_HIDDEN);
+
+    ESP_LOGI(TAG, "Weighscale touch callback ready");
+
+    //-----------END OF--------W E I G H S C A L E H A L O----------
+
 #endif
 //---------------------------------------------------------
 
@@ -465,21 +783,125 @@ void UI::showTouchHalo(lv_obj_t* icon)
     constexpr int32_t HALO_GAP = 2;
     constexpr int32_t HALO_BORDER = 3;
 
-    if (speedometerHalo_ == nullptr) {
+     if (icon == nullptr) {
         return;
     }
 
-    // Make sure halo follows the icon position
-    lv_obj_set_pos( speedometerHalo_, lv_obj_get_x(icon) - HALO_GAP - HALO_BORDER , lv_obj_get_y(icon) - HALO_GAP - HALO_BORDER);
+    // Hide both halos first
+    if (speedometerHalo_ != nullptr) {
+        lv_obj_add_flag(speedometerHalo_, LV_OBJ_FLAG_HIDDEN);
+    }
 
-    lv_obj_set_size( speedometerHalo_, lv_obj_get_width(icon) + 2 * (HALO_GAP + HALO_BORDER), lv_obj_get_height(icon) + 2 * (HALO_GAP + HALO_BORDER));
+    if (clockHalo_ != nullptr) {
+        lv_obj_add_flag(clockHalo_, LV_OBJ_FLAG_HIDDEN);
+    }
 
-    lv_obj_set_style_border_width(speedometerHalo_, HALO_BORDER, 0);
-    
-    // Start at full opacity
-    lv_obj_set_style_border_opa( speedometerHalo_, LV_OPA_COVER, 0);
+    if (settingsHalo_ != nullptr) {
+        lv_obj_add_flag(settingsHalo_, LV_OBJ_FLAG_HIDDEN);
+    }
 
-     lv_obj_clear_flag( speedometerHalo_, LV_OBJ_FLAG_HIDDEN);
+    if (weighHalo_ != nullptr) {
+        lv_obj_add_flag(weighHalo_, LV_OBJ_FLAG_HIDDEN);
+    }
+
+    if (icon == speedometerImage_) {
+        // Hide clock halo
+        if (clockHalo_ != nullptr) {
+            lv_obj_add_flag(clockHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+        else if (settingsHalo_ != nullptr) {
+            lv_obj_add_flag(settingsHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+        else if (weighHalo_ != nullptr) {
+            lv_obj_add_flag(weighHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+        //---------------------S P E E D H A L O-----------------------
+        // Make sure halo follows the icon position
+        lv_obj_set_pos( speedometerHalo_, lv_obj_get_x(icon) - HALO_GAP - HALO_BORDER , lv_obj_get_y(icon) - HALO_GAP - HALO_BORDER);
+
+        lv_obj_set_size( speedometerHalo_, lv_obj_get_width(icon) + 2 * (HALO_GAP + HALO_BORDER), lv_obj_get_height(icon) + 2 * (HALO_GAP + HALO_BORDER));
+
+        lv_obj_set_style_border_width(speedometerHalo_, HALO_BORDER, 0);
+        
+        // Start at full opacity
+        lv_obj_set_style_border_opa( speedometerHalo_, LV_OPA_COVER, 0);
+
+        lv_obj_clear_flag( speedometerHalo_, LV_OBJ_FLAG_HIDDEN);
+     //---------------------S P E E D H A L O-----E N D S-----------
+    }
+    else if (icon == clockImage_) {
+
+        // Hide Speedometer halo
+        if (speedometerHalo_ != nullptr) {
+            lv_obj_add_flag(speedometerHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+        else if (settingsHalo_ != nullptr) {
+            lv_obj_add_flag(settingsHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+        else if (weighHalo_ != nullptr) {
+            lv_obj_add_flag(weighHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+     //---------------------C L O C K H A L O-----------------------
+        lv_obj_set_pos( clockHalo_, lv_obj_get_x(icon) - HALO_GAP - HALO_BORDER , lv_obj_get_y(icon) - HALO_GAP - HALO_BORDER);
+
+        lv_obj_set_size( clockHalo_, lv_obj_get_width(icon) + 2 * (HALO_GAP + HALO_BORDER), lv_obj_get_height(icon) + 2 * (HALO_GAP + HALO_BORDER));
+
+        lv_obj_set_style_border_width(clockHalo_, HALO_BORDER, 0);
+        
+        // Start at full opacity
+        lv_obj_set_style_border_opa( clockHalo_, LV_OPA_COVER, 0);
+
+        lv_obj_clear_flag( clockHalo_, LV_OBJ_FLAG_HIDDEN);
+        //---------------------C L O C K H A L O-----E N D S-----------
+    }    
+    else if (icon == settingsImage_) {
+
+        // Hide Speedometer halo
+        if (speedometerHalo_ != nullptr) {
+            lv_obj_add_flag(speedometerHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+        else if (clockHalo_ != nullptr) {
+            lv_obj_add_flag(clockHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+        else if (weighHalo_ != nullptr) {
+            lv_obj_add_flag(weighHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+
+        lv_obj_set_pos( settingsHalo_, lv_obj_get_x(icon) - HALO_GAP - HALO_BORDER , lv_obj_get_y(icon) - HALO_GAP - HALO_BORDER);
+
+        lv_obj_set_size( settingsHalo_, lv_obj_get_width(icon) + 2 * (HALO_GAP + HALO_BORDER), lv_obj_get_height(icon) + 2 * (HALO_GAP + HALO_BORDER));
+
+        lv_obj_set_style_border_width(settingsHalo_, HALO_BORDER, 0);
+        
+        // Start at full opacity
+        lv_obj_set_style_border_opa( settingsHalo_, LV_OPA_COVER, 0);
+
+        lv_obj_clear_flag( settingsHalo_, LV_OBJ_FLAG_HIDDEN);
+    }    
+    else if (icon == weighscaleImage_) {
+
+        // Hide Speedometer halo
+        if (speedometerHalo_ != nullptr) {
+            lv_obj_add_flag(speedometerHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+        else if (clockHalo_ != nullptr) {
+            lv_obj_add_flag(clockHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+        else if (settingsHalo_ != nullptr) {
+            lv_obj_add_flag(settingsHalo_, LV_OBJ_FLAG_HIDDEN);
+        }
+
+        lv_obj_set_pos( weighHalo_, lv_obj_get_x(icon) - HALO_GAP - HALO_BORDER , lv_obj_get_y(icon) - HALO_GAP - HALO_BORDER);
+
+        lv_obj_set_size( weighHalo_, lv_obj_get_width(icon) + 2 * (HALO_GAP + HALO_BORDER), lv_obj_get_height(icon) + 2 * (HALO_GAP + HALO_BORDER));
+
+        lv_obj_set_style_border_width(weighHalo_, HALO_BORDER, 0);
+        
+        // Start at full opacity
+        lv_obj_set_style_border_opa( weighHalo_, LV_OPA_COVER, 0);
+
+        lv_obj_clear_flag( weighHalo_, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 UI::~UI()
