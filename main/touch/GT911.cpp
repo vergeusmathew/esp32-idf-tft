@@ -289,6 +289,17 @@ esp_err_t GT911::init(
     return ESP_OK;
 }
 
+
+uint8_t GT911::debugReadStatus()
+{
+    uint8_t status = 0;
+
+    if (readRegister(REG_STATUS, &status, 1) != ESP_OK)
+        return 0xFF;
+
+    return status;
+}
+
 // -----------------------------------------------------------------------------
 // Reset controller
 // -----------------------------------------------------------------------------

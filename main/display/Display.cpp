@@ -38,6 +38,16 @@ static const char *TAG = "DISPLAY";
 // -----------------------------------------------------------------------------
 // Initialization
 // -----------------------------------------------------------------------------
+bool IRAM_ATTR Display::onVsync(
+    esp_lcd_panel_handle_t panel,
+    const esp_lcd_rgb_panel_event_data_t* edata,
+    void* user_ctx)
+{
+    SemaphoreHandle_t sem = static_cast<SemaphoreHandle_t>(user_ctx);
+    BaseType_t woken = pdFALSE;
+    xSemaphoreGiveFromISR(sem, &woken);
+    return woken == pdTRUE;
+}
 
 esp_err_t Display::init()
 {
@@ -58,7 +68,7 @@ esp_err_t Display::init()
     // Validated 800x480 RGB565 timing
     // -------------------------------------------------------------------------
 
-    rgb_config.timings.pclk_hz = 40 * 1000 * 1000;
+    rgb_config.timings.pclk_hz = 27 * 1000 * 1000;
     rgb_config.timings.h_res = WIDTH;
     rgb_config.timings.v_res = HEIGHT;
 
@@ -137,14 +147,7 @@ esp_err_t Display::init()
     vsync_sem_ = xSemaphoreCreateBinary();
 
     esp_lcd_rgb_panel_event_callbacks_t cbs = {};
-    cbs.on_vsync = [](esp_lcd_panel_handle_t panel,
-                       const esp_lcd_rgb_panel_event_data_t* edata,
-                       void* user_ctx) -> bool {
-        SemaphoreHandle_t sem = static_cast<SemaphoreHandle_t>(user_ctx);
-        BaseType_t woken = pdFALSE;
-        xSemaphoreGiveFromISR(sem, &woken);
-        return woken == pdTRUE;
-    };
+    cbs.on_vsync = Display::onVsync;   // was the inline lambda
 
     ESP_ERROR_CHECK(
         esp_lcd_rgb_panel_register_event_callbacks(panel_handle_, &cbs, vsync_sem_)

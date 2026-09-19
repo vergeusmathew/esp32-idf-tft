@@ -15,6 +15,19 @@ public:
     bool init(Display& display);
 
     lv_display_t* handle() const;
+    //const FlushContext& flushContext() const { return flush_ctx_; }
+    private:
+    struct FlushContext {
+        esp_lcd_panel_handle_t panel_handle;
+        SemaphoreHandle_t vsync_sem;
+        uint32_t flush_count = 0;
+        int64_t  max_wait_us = 0;
+        int64_t  total_wait_us = 0;
+    };
+
+    public:
+        const FlushContext& flushContext() const { return flush_ctx_; }   // now comes after the struct is known
+
 
 private:
     Display* display_ = nullptr;
@@ -24,10 +37,11 @@ private:
         lv_display_t* display,
         const lv_area_t* area,
         uint8_t* px_map);
-
+/*
     struct FlushContext {
         esp_lcd_panel_handle_t panel_handle;
         SemaphoreHandle_t vsync_sem;
     };
+    */
     FlushContext flush_ctx_{};
 };

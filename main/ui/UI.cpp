@@ -11,6 +11,41 @@ constexpr int32_t PLANE_Y    = 24;
 constexpr int32_t PLANE_SIZE = 220;
 }
 
+void UI::speedometerTouchCallback(lv_event_t* e)
+{
+    UI* ui = static_cast<UI*>(lv_event_get_user_data(e));
+
+    if (ui == nullptr) {
+        return;
+    }
+
+    lv_event_code_t code = lv_event_get_code(e);
+
+    if (code == LV_EVENT_PRESSED) {
+
+        ESP_LOGI(TAG, "Speedometer icon pressed");
+
+        // Touch -> GREEN
+        ui->rgbLed_->setGreen();
+
+        lv_label_set_text( ui->dialTouchedLabel_, "Dial touched");
+
+        lv_obj_clear_flag( ui->dialTouchedLabel_, LV_OBJ_FLAG_HIDDEN);
+        
+        ui->showTouchHalo(ui->speedometerImage_);
+    }
+    else if (code == LV_EVENT_RELEASED) {
+
+        ESP_LOGI(TAG, "Speedometer icon released");
+
+        // Untouched -> BLUE
+        ui->rgbLed_->setBlue();
+        // Yellow ring OFF
+        lv_obj_add_flag( ui->speedometerHalo_, LV_OBJ_FLAG_HIDDEN); 
+    }
+}
+
+
 bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
 {
     rgbLed_ = &rgbLed;
@@ -23,15 +58,9 @@ bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
     }
 
     // Dark background
-    lv_obj_set_style_bg_color(
-        screen_,
-        lv_color_hex(0x202020),
-        0);
+    lv_obj_set_style_bg_color( screen_, lv_color_hex(0x202020), 0);
 
-    lv_obj_set_style_bg_opa(
-        screen_,
-        LV_OPA_COVER,
-        0);
+    lv_obj_set_style_bg_opa( screen_, LV_OPA_COVER, 0);
 
     // -------------------------------------------------
     // Step 1A: 200 x 200 solid white circle
@@ -263,6 +292,70 @@ bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
     lv_obj_set_pos(speedometerImage_, PLANE_X, PLANE_Y);
 
     ESP_LOGI(TAG, "Speedometer image centered");    
+
+    //--------------H A L O-----------------------
+    speedometerHalo_ = lv_obj_create(screen_);
+
+    if (speedometerHalo_ == nullptr) {
+        ESP_LOGE(TAG, "Failed to create Speedometer halo");
+        return false;
+    }
+
+    lv_obj_set_size( speedometerHalo_, IMAGE_WIDTH + 4, IMAGE_HEIGHT + 4);
+
+    lv_obj_set_pos( speedometerHalo_, PLANE_X - 2, PLANE_Y - 2);
+
+    lv_obj_set_style_bg_opa(speedometerHalo_, LV_OPA_TRANSP, 0);
+
+    lv_obj_set_style_border_color( speedometerHalo_, lv_color_hex(0xFFFF00), 0);
+
+    lv_obj_set_style_border_width( speedometerHalo_, 1, 0);
+
+    lv_obj_set_style_radius( speedometerHalo_, LV_RADIUS_CIRCLE,  0);
+
+    lv_obj_add_flag( speedometerHalo_, LV_OBJ_FLAG_HIDDEN);
+
+    lv_obj_add_flag( speedometerHalo_, LV_OBJ_FLAG_IGNORE_LAYOUT);
+
+    lv_obj_add_flag( speedometerHalo_, LV_OBJ_FLAG_FLOATING);
+
+    lv_obj_remove_flag( speedometerHalo_, LV_OBJ_FLAG_CLICKABLE);    
+
+    //--------------------------------------------
+
+    // Make Speedometer touchable
+    lv_obj_add_flag(speedometerImage_, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_add_event_cb( speedometerImage_, UI::speedometerTouchCallback, LV_EVENT_PRESSED, this);
+
+    lv_obj_add_event_cb( speedometerImage_, UI::speedometerTouchCallback, LV_EVENT_RELEASED, this);
+
+    lv_obj_set_style_bg_opa(speedometerImage_, LV_OPA_TRANSP,
+    static_cast<lv_style_selector_t>(
+        static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_PRESSED)));
+
+    lv_obj_set_style_image_recolor_opa(speedometerImage_, LV_OPA_TRANSP,
+    static_cast<lv_style_selector_t>(
+        static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_PRESSED)));
+
+    // -------------------------------------------------
+    // Speedometer touch test message
+    // -------------------------------------------------
+
+    dialTouchedLabel_ = lv_label_create(screen_);
+
+    if (dialTouchedLabel_ == nullptr) { 
+        ESP_LOGE(TAG, "Failed to create dial touched label");
+        return false;
+    }
+
+    lv_label_set_text(dialTouchedLabel_, "Dial touched");
+
+    lv_obj_center(dialTouchedLabel_);
+
+    lv_obj_add_flag( dialTouchedLabel_, LV_OBJ_FLAG_HIDDEN);
+
+    ESP_LOGI(TAG, "Speedometer touch callback ready");
 #endif
 //-----------------------SETTINGS------------------------------
 #if 1
@@ -365,6 +458,28 @@ bool UI::init(RGBLed& rgbLed, WinbondFlash& flash)
 //---------------------------------------------------------
 
     return true;
+}
+
+void UI::showTouchHalo(lv_obj_t* icon)
+{
+    constexpr int32_t HALO_GAP = 2;
+    constexpr int32_t HALO_BORDER = 3;
+
+    if (speedometerHalo_ == nullptr) {
+        return;
+    }
+
+    // Make sure halo follows the icon position
+    lv_obj_set_pos( speedometerHalo_, lv_obj_get_x(icon) - HALO_GAP - HALO_BORDER , lv_obj_get_y(icon) - HALO_GAP - HALO_BORDER);
+
+    lv_obj_set_size( speedometerHalo_, lv_obj_get_width(icon) + 2 * (HALO_GAP + HALO_BORDER), lv_obj_get_height(icon) + 2 * (HALO_GAP + HALO_BORDER));
+
+    lv_obj_set_style_border_width(speedometerHalo_, HALO_BORDER, 0);
+    
+    // Start at full opacity
+    lv_obj_set_style_border_opa( speedometerHalo_, LV_OPA_COVER, 0);
+
+     lv_obj_clear_flag( speedometerHalo_, LV_OBJ_FLAG_HIDDEN);
 }
 
 UI::~UI()

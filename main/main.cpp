@@ -461,7 +461,7 @@ extern "C" void app_main(void)
     // ---------------------------------------------------------
     // Touch
     // ---------------------------------------------------------
-#if 0
+#if 1
     ESP_LOGI(TAG, "Initializing Touch...");
 
     GT911 touch;
@@ -485,6 +485,19 @@ extern "C" void app_main(void)
         ESP_LOGI(TAG, "GT911 initialized");
     }
 
+//-------------------------------------------------------------
+ /*while (true)
+{
+    uint8_t status = touch.debugReadStatus();
+
+    ESP_LOGI(
+        "TOUCH_TEST",
+        "GT911 STATUS = 0x%02X",
+        status);
+
+    vTaskDelay(pdMS_TO_TICKS(500));
+}*/
+//-------------------------------------------------------------
     LVGLTouch lvglTouch;
 
     if (!lvglTouch.init(touch)) {
@@ -496,16 +509,25 @@ extern "C" void app_main(void)
     // ---------------------------------------------------------
     // Main LVGL loop
     // ---------------------------------------------------------
-
+    static uint32_t last_report_flush_count = 0;
+    static int64_t  last_report_time = 0;
     while (1)
     {
-         //ESP_LOGI(TAG, "Before lv_timer_handler()");
+        // inside your while(1) loop, after lv_timer_handler():
+        int64_t now = esp_timer_get_time();
+        if (now - last_report_time > 10 * 1000 * 1000) {  // every 10 seconds
+            uint32_t count = lvglDisplay.flushContext().flush_count;  // add a small getter
+            uint32_t delta = count - last_report_flush_count;
 
-    //uint32_t next = lv_timer_handler();
+            ESP_LOGI(TAG, "Flush stats: total=%lu, +%lu since last report, max_wait=%lld us",
+                    (unsigned long)count, (unsigned long)delta,
+                    (long long)lvglDisplay.flushContext().max_wait_us);
+
+            last_report_flush_count = count;
+            last_report_time = now;
+        }
+
         lv_timer_handler();
-    //ESP_LOGI(TAG, "After lv_timer_handler(): %lu",
-    //         static_cast<unsigned long>(next));
-
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

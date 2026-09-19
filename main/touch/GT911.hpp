@@ -124,7 +124,7 @@ public:
     {
         return touch_max_y_;
     }
-
+    uint8_t debugReadStatus();
 private:
     esp_err_t resetController(
         gpio_num_t rst_pin,
@@ -151,7 +151,7 @@ private:
     );
 
     void clearPoints();
-
+    
 private:
     i2c_master_bus_handle_t bus_handle_ = nullptr;
     i2c_master_dev_handle_t dev_handle_ = nullptr;

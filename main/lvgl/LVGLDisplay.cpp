@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include "esp_log.h"
+#include "esp_timer.h"
 #define CL  1
 
 bool LVGLDisplay::init(Display& display)
@@ -112,7 +113,23 @@ void LVGLDisplay::flushCallback(
 {
     auto* ctx = static_cast<FlushContext*>(lv_display_get_user_data(display));
 
+    int64_t t0 = esp_timer_get_time();
     xSemaphoreTake(ctx->vsync_sem, portMAX_DELAY);
+    int64_t wait_us = esp_timer_get_time() - t0;
+
+    ctx->flush_count++;
+    ctx->total_wait_us += wait_us;
+    if (wait_us > ctx->max_wait_us) {
+        ctx->max_wait_us = wait_us;
+    }
+
+    // Log anything suspicious immediately, not just periodically:
+    // a wait longer than ~1 full frame period (≈16-20ms at typical refresh)
+    // suggests a missed/late vsync rather than normal blanking-window timing.
+    if (wait_us > 20000) {
+        ESP_LOGW("LVGLDisplay", "Long vsync wait: %lld us (flush #%lu)",
+                 (long long)wait_us, (unsigned long)ctx->flush_count);
+    }
 
     esp_lcd_panel_draw_bitmap(
         ctx->panel_handle,
